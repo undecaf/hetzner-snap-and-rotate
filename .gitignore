@@ -1,0 +1,6 @@
+.git
+.idea
+.venv
+.env
+config.json
+dist/

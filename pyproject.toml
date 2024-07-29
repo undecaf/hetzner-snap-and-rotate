@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hetzner_snap_and_rotate"
+dynamic = ["version"]
+authors = [
+  { name="F. Kasper", email="fkasper@modus-operandi.at" },
+]
+description = "Creates and rotates snapshots of Hetzner cloud servers"
+keywords = [
+    "Hetzner",
+    "Cloud",
+    "Backup rotation",
+    "Snapshot rotation"
+]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests ~= 2.32.3",
+    "dataclass-wizard ~= 0.22.3"
+]
+
+[project.optional-dependencies]
+tests = [
+    "parameterized ~= 0.9.0",
+    "requests_mock ~= 1.12.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/undecaf/hetzner-snap-and-rotate"
+Issues = "https://github.com/undecaf/hetzner-snap-and-rotate/issues"
+[tool.hatch.version]
+path = "src/hetzner_snap_and_rotate/__version__.py"

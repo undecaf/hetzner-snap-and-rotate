@@ -1,0 +1,44 @@
+{
+  "api-token": "123456",
+
+  "defaults": {
+    "create-snapshot": true,
+    "snapshot-timeout": 123,
+    "snapshot-name": "default-name",
+    "shutdown-and-restart": true,
+    "shutdown-timeout": 42,
+    "allow-poweroff": true,
+
+    "rotate": true,
+    "sliding-periods": true,
+    "quarter_hourly": 6,
+    "hourly": 5,
+    "daily": 4,
+    "weekly": 3,
+    "monthly": 2,
+    "yearly": 1
+  },
+
+  "servers": {
+    "server-1": {
+    },
+
+    "server-2": {
+      "create-snapshot": false,
+      "snapshot-timeout": 456,
+      "snapshot-name": "other-name",
+      "shutdown-and-restart": false,
+      "shutdown-timeout": 99,
+      "allow-poweroff": false,
+
+      "rotate": false,
+      "sliding-periods": false,
+      "quarter_hourly": 1,
+      "hourly": 2,
+      "daily": 3,
+      "weekly": 4,
+      "monthly": 5,
+      "yearly": 6
+     }
+  }
+}

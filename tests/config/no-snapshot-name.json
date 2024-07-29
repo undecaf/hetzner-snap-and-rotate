@@ -1,0 +1,22 @@
+{
+  "api-token": "123456",
+
+  "defaults": {
+    "create-snapshot": true,
+    "shutdown-and-restart": true,
+    "allow-poweroff": true,
+
+    "rotate": true,
+    "quarter_hourly": 6,
+    "hourly": 5,
+    "daily": 4,
+    "weekly": 3,
+    "monthly": 2,
+    "yearly": 1
+  },
+
+  "servers": {
+    "server-1": {
+    }
+  }
+}
