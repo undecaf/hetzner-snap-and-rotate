@@ -36,5 +36,6 @@ tests = [
 [project.urls]
 Homepage = "https://github.com/undecaf/hetzner-snap-and-rotate"
 Issues = "https://github.com/undecaf/hetzner-snap-and-rotate/issues"
+
 [tool.hatch.version]
 path = "src/hetzner_snap_and_rotate/__version__.py"
