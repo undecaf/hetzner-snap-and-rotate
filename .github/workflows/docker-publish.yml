@@ -5,8 +5,12 @@ on:
     tags:
       - 'v*'
 
+  workflow_dispatch:
+
+
 env:
   IMAGE_NAME: ${{ github.repository }}
+
 
 jobs:
   build:
