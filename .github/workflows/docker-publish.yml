@@ -5,8 +5,12 @@ on:
     tags:
       - 'v*'
 
+  workflow_dispatch:
+
+
 env:
   IMAGE_NAME: ${{ github.repository }}
+
 
 jobs:
   build:
@@ -36,5 +40,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }},${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
