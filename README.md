@@ -25,11 +25,15 @@ Additional features:
   - [Taking snapshots](#taking-snapshots)
   - [Rotating snapshots](#rotating-snapshots)
   - [Snapshot name templates](#snapshot-name-templates)
-- [Running the script](#running-the-script)
+- [Running the script natively](#running-the-script-natively)
   - [Command line options](#command-line-options)
   - [Passing the API token](#passing-the-api-token)
   - [Creating and rotating snapshots in a cron job](#creating-and-rotating-snapshots-in-a-cron-job)
   - [Snapshots seem to be missing after rotation](#snapshots-seem-to-be-missing-after-rotation)
+- [Running the script in a container](#running-the-script-in-a-container)
+  - [Passing the configuration file to the container](#passing-the-configuration-file-to-the-container)
+  - [Environment variables](#environment-variables)
+  - [Examples](#examples)
 - [Licenses](#licenses)
 
 
@@ -122,7 +126,7 @@ Omitted `defaults` default to `0`, `false` or `''` except for:
 - `shutdown-timeout`: defaults to `30`
 
 Please note that this is not valid JSON due to the comments.
-File [resources/config-example.json](https://raw.githubusercontent.com/undecaf/hetzner-snap-and-rotate/master/resources/config-example.json) contains the same example
+File [resources/config-example.json](https://raw.githubusercontent.com/undecaf/hetzner-snap-and-rotate:latest/master/resources/config-example.json) contains the same example
 as a valid JSON file without comments.
 
 
@@ -192,7 +196,7 @@ The following field names are available for formatting:
 | `env`           |                               `dict[str]`                                | Environment variables, may be referred to like e.g. `env[USER]`                                                                                                                                                                                                                  |
 
 
-## Running the script
+## Running the script natively
 
 ```shell
 python3 -m hetzner_snap_and_rotate [options ...]
@@ -234,6 +238,98 @@ If several types of retention period (e.g. `daily`, `weekly` and `monthly`) have
 will be contained in each of the latest ones of these periods at the same time.  
 Since the snapshot name will be derived from the longest period (`monthly`), there will not be any snapshots named 
 after the latest ones of the shorter retention periods (`daily` and `weekly`).
+
+
+## Running the script in a container
+
+[This image on Docker Hub](https://hub.docker.com/r/undecaf/hetzner-snap-and-rotate) runs the script
+in a [Docker](https://www.docker.com/) or [Podman](https://podman.io/) container
+(for Podman, substitute `podman` for `docker` in the following commands):
+
+```shell
+docker run [Docker options] undecaf/hetzner-snap-and-rotate:latest [script command line options]
+```
+
+The same [command line options](#command-line-options) are available as for the native script.
+
+
+### Passing the configuration file to the container
+
+[The configuration file](#creating-the-configuration-file) needs to be prepared on the host.
+It can be passed to the container in various ways:
+
+- As a [bind mount](https://docs.docker.com/storage/bind-mounts/), e.g.
+
+  ```shell
+  docker run --mount type=bind,source=/path/to/your/config.json,target=/config.json [other Docker options] undecaf/hetzner-snap-and-rotate:latest [script command line options]
+  ```
+  
+- As a [secret](https://docs.docker.com/engine/swarm/secrets/); this requires [Podman](https://podman.io/) or 
+[Docker swarm](https://docs.docker.com/engine/swarm/).  
+  First, your configuration file needs to be saved as a secret (e.g. called `config_json`):
+
+  ```shell
+  docker secret create config_json /path/to/your/config.json
+  ```
+  
+  That secret becomes part of your Docker/Podman configuration and then can be passed to the container:
+
+  ```shell
+  docker run --secret=config_json,target=/config.json [other Docker options] undecaf/hetzner-snap-and-rotate:latest [script command line options]
+  ```
+
+
+### Environment variables
+
+Environment variables referenced in your [snapshot name templates](#snapshot-name-templates) must be
+passed to the container as `--env` options, e.g.
+
+```shell
+docker run --env USER=your_username [other Docker options] undecaf/hetzner-snap-and-rotate:latest [script command line options]
+```
+
+
+### Examples
+
+Display the script version and exit:
+
+```shell
+# does not require a configuration file
+docker run --rm  undecaf/hetzner-snap-and-rotate:latest --version
+```
+
+Dry run with the API token in the configuration file, log priority `DEBUG`:
+
+```shell
+# option --tty/-t to display log output in real time
+docker run \
+  --rm \
+  --tty \
+  --mount type=bind,source=/path/to/your/config.json,target=/config.json \
+  undecaf/hetzner-snap-and-rotate:latest --dry-run --priority DEBUG
+```
+
+Live run with the API token in the configuration file:
+
+```shell
+# option --tty/-t to display log output in real time
+docker run \
+  --rm \
+  --tty \
+  --mount type=bind,source=/path/to/your/config.json,target=/config.json \
+  undecaf/hetzner-snap-and-rotate:latest
+```
+
+Passing the API token through `stdin`:
+
+```shell
+# requires option --interactive/-i, adding --tty/-t would display the API token
+cat /your/api/token/file | docker run \
+  --rm \
+  --interactive \
+  --mount type=bind,source=/path/to/your/config.json,target=/config.json \
+  undecaf/hetzner-snap-and-rotate:latest --api-token-from -
+```
 
 
 ## Licenses
