@@ -33,9 +33,10 @@ def main() -> int:
                     new_snapshot = None
 
                 if srv.config.rotate:
-                    log(f'Server [{srv.name}]: {len(srv.snapshots)} snapshot(s) before rotation', LOG_DEBUG)
+                    sn_len = len(srv.snapshots)
+                    log(f'Server [{srv.name}]: {sn_len} snapshot{"s"[:sn_len!=1]} before rotation', LOG_DEBUG)
                     for i, sn in enumerate(srv.snapshots, start=1):
-                        log(f'  {i}. {sn.description}', LOG_DEBUG)
+                        log(f'{i:3}. {sn.description}', LOG_DEBUG)
 
                     # Find out which snapshots to preserve for the configured rotation periods,
                     # and note the new rotation period they are now associated with
@@ -64,9 +65,10 @@ def main() -> int:
                     for sn in to_delete:
                         sn.delete(srv)
 
-                    log(f'Server [{srv.name}]: {len(srv.snapshots)} snapshot(s) after rotation', LOG_DEBUG)
+                    sn_len = len(srv.snapshots)
+                    log(f'Server [{srv.name}]: {sn_len} snapshot{"s"[:sn_len!=1]} after rotation', LOG_DEBUG)
                     for i, sn in enumerate(srv.snapshots, start=1):
-                        log(f'  {i}. {sn.description}', LOG_DEBUG)
+                        log(f'{i:3}. {sn.description}', LOG_DEBUG)
 
             except Exception as ex:
                 log(ex.__str__(), LOG_ERR)
