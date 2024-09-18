@@ -7,7 +7,7 @@ This script can perform the following tasks for selected servers of a [Hetzner c
 - Rotating snapshots, retaining a limited number of quarter-hourly, hourly, daily, weekly, monthly, quarterly and
   yearly snapshots
 - Generating names of new and rotated snapshots from templates
-- Linking rotation periods either to fixed clock/calendar instants or to the most recent snapshot
+- Linking rotation periods to either fixed clock/calendar instants or to the most recent snapshot
 
 These tasks can be configured independently per server in a [JSON configuration file](#creating-the-configuration-file).
 
@@ -126,7 +126,7 @@ Omitted `defaults` default to `0`, `false` or `''` except for:
 - `shutdown-timeout`: defaults to `30`
 
 Please note that this is not valid JSON due to the comments.
-File [resources/config-example.json](https://raw.githubusercontent.com/undecaf/hetzner-snap-and-rotate:latest/master/resources/config-example.json) contains the same example
+File [resources/config-example.json](https://raw.githubusercontent.com/undecaf/hetzner-snap-and-rotate/refs/heads/main/resources/config-example.json) contains the same example
 as a valid JSON file without comments.
 
 
@@ -170,12 +170,12 @@ starts at the latest of the following instants that lies before the rotation ins
   | `weekly`         | 00:00 on Monday of the current week                                |
   | `monthly`        | 00:00 on the first day of the current month                        |
   | `quarterly`      | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
-  | `yearly`         | 00:00 on Jan 1st of the current year                               |
+  | `yearly`         | 00:00 on Jan 1 of the current year                                 |
 
   These instants refer to the timezone of the system running this script.
 
 - If a period contains multiple snapshots then only the most recent one will be retaind for that period.
-- Preserving a snapshot for some period takes precedence over deleting that snapshot for some other period.
+- Retaining a snapshot for some period takes precedence over deleting that snapshot for some other period.
 - Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name,
 the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
 See section [Snapshot name templates](#snapshot-name-templates) below for details.
@@ -195,6 +195,9 @@ The following field names are available for formatting:
 | `timestamp`     | [`datetime.datetime`](https://docs.python.org/3.8/library/datetime.html) | _Creation_ instant of the snapshot (_not changed by rotation_), expressed in the timezone of the system running this script. [`datetime`-specific formatting](https://docs.python.org/3.10/library/datetime.html#strftime-and-strptime-format-codes) may be used for this field. |
 | `env`           |                               `dict[str]`                                | Environment variables, may be referred to like e.g. `env[USER]`                                                                                                                                                                                                                  |
 
+If the same snapshot is contained in multiple periods then the longest period
+determines `period_type` and `period_number`.
+
 
 ## Running the script natively
 
@@ -207,9 +210,9 @@ python3 -m hetzner_snap_and_rotate [options ...]
 
 | Option                                                                                   | Description                                                                                                                                                                               |
 |------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <code>--config <u>config file</u></code><br><code>-c <u>config file</u></code>           | Read the configuration from <code><u>config file</u></code>. Default: `config.json`                                                                                                       |
-| <code>--api-token-from <u>env var</u></code><br><code>-t <u>env var</u></code>           | Read the API token from environment variable <code><u>env var</u></code>, or read it from `stdin` if `'-'` is specified. Default: get the API token from <code><u>config file</u></code>. |
-| <code>--facility <u>syslog facility</u></code><br><code>-f <u>syslog facility</u></code> | Send the log messages to <code><u>syslog facility</u></code> (`SYSLOG`, `USER`, `DAEMON`, `CRON`, etc.). Default: send log messages to `stdout`.                                          |
+| <code>--config <u>config_file</u></code><br><code>-c <u>config_file</u></code>           | Read the configuration from <code><u>config_file</u></code>. Default: `config.json`                                                                                                       |
+| <code>--api-token-from <u>env_var</u></code><br><code>-t <u>env_var</u></code>           | Read the API token from environment variable <code><u>env_var</u></code>, or read it from `stdin` if `'-'` is specified. Default: get the API token from <code><u>config_file</u></code>. |
+| <code>--facility <u>syslog_facility</u></code><br><code>-f <u>syslog_facility</u></code> | Send the log messages to <code><u>syslog_facility</u></code> (`SYSLOG`, `USER`, `DAEMON`, `CRON`, etc.). Default: send log messages to `stdout`.                                          |
 | <code>--priority <u>pri</u></code><br><code>-p <u>pri</u></code>                         | Log only messages up to syslog priority <code><u>pri</u></code> (`ERR`, `WARNING`, `NOTICE`, `INFO`, `DEBUG`, or `OFF` to disable logging). Default: `NOTICE`.                            |
 | `--dry-run`<br>`-n`                                                                      | Perform a trial run with no changes made. This requires only an [API token](#generating-an-api-token) with "Read" permission.                                                             |
 | `--version`<br>`-v`                                                                      | Display the version number and exit.                                                                                                                                                      | 
@@ -235,8 +238,8 @@ If, for example, the shortest retention period has been set to `daily` then the 
 ### Snapshots seem to be missing after rotation
 
 If several types of retention period (e.g. `daily`, `weekly` and `monthly`) have been defined then the latest snapshot
-will be contained in each of the latest ones of these periods at the same time.  
-Since the snapshot name will be derived from the longest period (`monthly`), there will not be any snapshots named 
+will be contained in the latest period of each type at the same time.  
+Since the snapshot will be named after the longest period (`monthly`), there will not be any snapshots named 
 after the latest ones of the shorter retention periods (`daily` and `weekly`).
 
 
@@ -301,7 +304,7 @@ docker run --rm  undecaf/hetzner-snap-and-rotate:latest --version
 Dry run with the API token in the configuration file, log priority `DEBUG`:
 
 ```shell
-# option --tty/-t to display log output in real time
+# option --tty/-t displays log output in real time
 docker run \
   --rm \
   --tty \
@@ -312,7 +315,7 @@ docker run \
 Live run with the API token in the configuration file:
 
 ```shell
-# option --tty/-t to display log output in real time
+# option --tty/-t displays log output in real time
 docker run \
   --rm \
   --tty \
@@ -323,7 +326,7 @@ docker run \
 Passing the API token through `stdin`:
 
 ```shell
-# requires option --interactive/-i, adding --tty/-t would display the API token
+# requires option --interactive/-i, adding --tty/-t would display the API token :-(
 cat /your/api/token/file | docker run \
   --rm \
   --interactive \
