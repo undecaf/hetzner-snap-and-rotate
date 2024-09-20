@@ -101,13 +101,13 @@ class Server(JSONWizard):
             try:
                 log(f'Server [{self.name}]: shutting down', LOG_NOTICE)
                 if not global_config.dry_run:
-                    self.perform_action(ServerAction.SHUTDOWN, self.config.shutdown_timeout)
+                    self.perform_action(ServerAction.SHUTDOWN, timeout = self.config.shutdown_timeout)
                     log(f'Server [{self.name}]: has been shut down', LOG_INFO)
 
             except TimeoutError:
                 log(f'Server [{self.name}]: unable to shut down, powering off', LOG_WARNING)
                 if not global_config.dry_run:
-                    self.perform_action(ServerAction.POWER_OFF, self.config.shutdown_timeout)
+                    self.perform_action(ServerAction.POWER_OFF, timeout = self.config.shutdown_timeout)
                     log(f'Server [{self.name}]: has been powered off', LOG_INFO)
 
     def snapshot_name(self,

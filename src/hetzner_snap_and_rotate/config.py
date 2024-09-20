@@ -187,7 +187,7 @@ class Config(JSONWizard):
                 config_file.close()
 
         except Exception as ex:
-            print(f'Invalid configuration: {ex.__str__()}', file=sys.stderr)
+            print(f'Invalid configuration: {repr(ex)}', file=sys.stderr)
             exit(1)
 
     def of_server(self, name: str):

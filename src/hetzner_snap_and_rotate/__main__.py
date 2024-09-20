@@ -71,10 +71,10 @@ def main() -> int:
                         log(f'{i:3}. {sn.description}', LOG_DEBUG)
 
             except Exception as ex:
-                log(ex.__str__(), LOG_ERR)
+                log(repr(ex), LOG_ERR)
                 
     except Exception as ex:
-        log(ex.__str__(), LOG_ERR)
+        log(repr(ex), LOG_ERR)
 
     return 0
 
