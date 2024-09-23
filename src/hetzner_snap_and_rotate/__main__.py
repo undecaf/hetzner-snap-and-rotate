@@ -18,17 +18,29 @@ def main() -> int:
             try:
                 # Create a new snapshot if so configured and preserve the server operating status
                 if srv.config.create_snapshot:
-                    if (srv.config.shutdown_and_restart
-                            and (srv.status in [ServerStatus.STARTING, ServerStatus.RUNNING])):
-                        srv.power(False)
-                        restart = True
-                    else:
-                        restart = False
+                    caught = None
 
-                    new_snapshot = create_snapshot(srv, srv.config.snapshot_timeout)
+                    try:
+                        if (srv.config.shutdown_and_restart
+                                and (srv.status in [ServerStatus.STARTING, ServerStatus.RUNNING])):
+                            restart = True
+                            srv.power(False)
+                        else:
+                            restart = False
+
+                        new_snapshot = create_snapshot(srv, srv.config.snapshot_timeout)
+
+                    # If an exception occurred during powering down or snapshotting
+                    # then throw it only after having restarted the server, if necessary
+                    except Exception as ex:
+                        caught = ex
 
                     if restart:
                         srv.power(True)
+
+                    if caught:
+                        raise caught
+
                 else:
                     new_snapshot = None
 
