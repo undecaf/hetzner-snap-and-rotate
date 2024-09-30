@@ -34,7 +34,6 @@ class Config(JSONWizard):
         allow_poweroff: OptionalBool = None
 
         rotate: OptionalBool = None
-        sliding_periods: OptionalBool = None
         quarter_hourly: OptionalInt = None
         hourly: OptionalInt = None
         daily: OptionalInt = None

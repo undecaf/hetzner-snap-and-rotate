@@ -10,7 +10,6 @@
       "allow-poweroff": false,
 
       "rotate": true,
-      "sliding-periods": false,
       "quarter-hourly": 0,
       "hourly": 2,
       "daily": 3,
@@ -30,7 +29,6 @@
       "shutdown-timeout": 30,
       "allow-poweroff": true,
 
-      "sliding-periods": true,
       "hourly": 0,
       "daily": 0,
       "monthly": 6,

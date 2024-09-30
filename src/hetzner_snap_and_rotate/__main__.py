@@ -17,16 +17,17 @@ def main() -> int:
         for srv in servers.servers:
             try:
                 # Create a new snapshot if so configured and preserve the server operating status
+                new_snapshot = None
+
                 if srv.config.create_snapshot:
                     caught = None
+                    restart = False
 
                     try:
                         if (srv.config.shutdown_and_restart
                                 and (srv.status in [ServerStatus.STARTING, ServerStatus.RUNNING])):
                             restart = True
                             srv.power(False)
-                        else:
-                            restart = False
 
                         new_snapshot = create_snapshot(srv, srv.config.snapshot_timeout)
 
@@ -41,9 +42,6 @@ def main() -> int:
                     if caught:
                         raise caught
 
-                else:
-                    new_snapshot = None
-
                 if srv.config.rotate:
                     sn_len = len(srv.snapshots)
                     log(f'Server [{srv.name}]: {sn_len} snapshot{"s"[:sn_len!=1]} before rotation', LOG_DEBUG)
@@ -55,12 +53,13 @@ def main() -> int:
                     to_delete: set[Snapshot] = set(srv.snapshots)
                     to_rename: dict[Snapshot, tuple[Period, int]] = {}
 
+                    now = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
+
                     for p in Period:
                         p_count = getattr(srv.config, p.config_name, 0) or 0
-                        now = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
                         p_end = now
 
-                        for p_num, p_start in enumerate(p.previous_periods(now, p_count, srv.config.sliding_periods),
+                        for p_num, p_start in enumerate(p.previous_periods(now, p_count),
                                                         start=1):
                             p_sn = Snapshots.most_recent(p_start, p_end, srv.snapshots)
                             if p_sn:

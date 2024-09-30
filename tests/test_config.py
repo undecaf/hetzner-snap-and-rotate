@@ -23,7 +23,6 @@ class TestConfig(TestCase):
         shutdown_timeout=42,
         allow_poweroff=True,
         rotate=True,
-        sliding_periods=True,
         quarter_hourly=6,
         hourly=5,
         daily=4,
@@ -41,7 +40,6 @@ class TestConfig(TestCase):
         'shutdown_timeout': 99,
         'allow_poweroff': False,
         'rotate': False,
-        'sliding_periods': False,
         'quarter_hourly': 1,
         'hourly': 2,
         'daily': 3,
@@ -64,10 +62,10 @@ class TestConfig(TestCase):
         self.assertEqual(actual, Config.Server(**(vars(default) | default_override)))
 
     @parameterized.expand([
-        ('missing', '[Errno 2] No such file or directory'),
-        ('blank', 'Expecting value'),
-        ('empty', 'No API token specified'),
-        ('no-snapshot-name', 'No snapshot name specified for server [server-1]'),
+        ('missing', "FileNotFoundError(2, 'No such file or directory')"),
+        ('blank', "JSONDecodeError('Expecting value: line 1 column 1 (char 0)')"),
+        ('empty', "ValueError('No API token specified')"),
+        ('no-snapshot-name', "ValueError('No snapshot name specified for server [server-1]')"),
     ])
     def test_read_invalid_config(self, file_name: str, expected_err: str):
         with patch('sys.stderr', new=StringIO()) as mocked_stderr:

@@ -7,7 +7,6 @@ This script can perform the following tasks for selected servers of a [Hetzner c
 - Rotating snapshots, retaining a limited number of quarter-hourly, hourly, daily, weekly, monthly, quarterly and
   yearly snapshots
 - Generating names of new and rotated snapshots from templates
-- Linking rotation periods to either fixed clock/calendar instants or to the most recent snapshot
 
 These tasks can be configured independently per server in a [JSON configuration file](#creating-the-configuration-file).
 
@@ -80,8 +79,6 @@ The configuration file is expected to be a JSON document in UTF-8 encoding with 
          false,
       "rotate":                // rotate the existing snapshots and the new one, if any 
          true,
-      "sliding-periods":       // whether rotation periods are sliding or clock/calendar-based;
-         false,                // see section "Rotating snapshots" below
       "quarter-hourly":        // number of quarter-hourly snapshots to retain (intended for testing)
          0,
       "hourly":                // number of hourly snapshots to retain
@@ -109,7 +106,6 @@ The configuration file is expected to be a JSON document in UTF-8 encoding with 
       "shutdown-timeout": 30,
       "allow-poweroff": true,
 
-      "sliding-periods": true,
       "hourly": 0,
       "daily": 0,
       "monthly": 6,
@@ -156,11 +152,7 @@ for how many such periods the snapshots will be retaind.
 The rotation process is governed by the following rules:
 
 - Periods are counted backwards from the instant of the rotation process.
-- If `sliding-periods` is `true` then the last period starts at
-the rotation instant minus the respective period length, i.e. periods slide along with
-the instant of rotation.
-- If `sliding-periods` is `false` then the last period 
-starts at the latest of the following instants that lies before the rotation instant:
+- The last period starts at the latest of the following instants that lies before the rotation instant:
 
   | Rotation period  | Starts at                                                          |
   |------------------|--------------------------------------------------------------------|
