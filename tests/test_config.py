@@ -23,11 +23,12 @@ class TestConfig(TestCase):
         shutdown_timeout=42,
         allow_poweroff=True,
         rotate=True,
-        quarter_hourly=6,
-        hourly=5,
-        daily=4,
-        weekly=3,
-        monthly=2,
+        quarter_hourly=7,
+        hourly=6,
+        daily=5,
+        weekly=4,
+        monthly=3,
+        quarter_yearly=2,
         yearly=1
     )
 
@@ -45,7 +46,8 @@ class TestConfig(TestCase):
         'daily': 3,
         'weekly': 4,
         'monthly': 5,
-        'yearly': 6
+        'quarter_yearly': 6,
+        'yearly': 7
     }
 
     @staticmethod

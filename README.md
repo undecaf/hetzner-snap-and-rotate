@@ -161,7 +161,7 @@ The rotation process is governed by the following rules:
   | `daily`          | 00:00 on the current day                                           |
   | `weekly`         | 00:00 on Monday of the current week                                |
   | `monthly`        | 00:00 on the first day of the current month                        |
-  | `quarterly`      | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
+  | `quarter-yearly` | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
   | `yearly`         | 00:00 on Jan 1 of the current year                                 |
 
   These instants refer to the timezone of the system running this script.

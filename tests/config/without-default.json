@@ -15,12 +15,13 @@
 
       "rotate": false,
       "sliding-periods": false,
-      "quarter_hourly": 1,
+      "quarter-hourly": 1,
       "hourly": 2,
       "daily": 3,
       "weekly": 4,
       "monthly": 5,
-      "yearly": 6
+      "quarter-yearly": 6,
+      "yearly": 7
      }
   }
 }

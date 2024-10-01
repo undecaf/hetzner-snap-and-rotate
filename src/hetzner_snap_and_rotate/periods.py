@@ -46,7 +46,7 @@ class Period(Enum):
     DAILY = 'daily', previous_day
     WEEKLY = 'weekly', previous_week
     MONTHLY = 'monthly', previous_month
-    QUARTER_YEARLY = 'quarterly', previous_quarter_year
+    QUARTER_YEARLY = 'quarter_yearly', previous_quarter_year
     YEARLY = 'yearly', previous_year
 
     config_name: str

@@ -7,7 +7,7 @@
     "allow-poweroff": true,
 
     "rotate": true,
-    "quarter_hourly": 6,
+    "quarter-hourly": 6,
     "hourly": 5,
     "daily": 4,
     "weekly": 3,

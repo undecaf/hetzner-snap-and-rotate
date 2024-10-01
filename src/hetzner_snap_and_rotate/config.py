@@ -39,6 +39,7 @@ class Config(JSONWizard):
         daily: OptionalInt = None
         weekly: OptionalInt = None
         monthly: OptionalInt = None
+        quarter_yearly: OptionalInt = None
         yearly: OptionalInt = None
 
     @dataclass(kw_only=True)
