@@ -115,7 +115,7 @@ class Snapshots(Page, JSONWizard):
             start, end = end, start
 
         matching = sorted(
-            filter(lambda s: start < s.created <= end, snapshots),
+            filter(lambda s: start <= s.created < end, snapshots),
             key=lambda s: s.created,
             reverse=True
         )

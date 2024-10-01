@@ -147,22 +147,24 @@ for which `rotate-snapshots` is `true`.
 "Rotating" means that existing snapshots will be renamed
 according to `snapshot-name`, or will be deleted if they are not contained in any of the
 configured `quarter-hourly`, `hourly`, ... `yearly` periods. These settings determine
-for how many such periods the snapshots will be retaind.
+for how many such periods the snapshots will be retained.
 
-The rotation process is governed by the following rules:
+The rotation process is controlled by the following rules:
 
-- Periods are counted backwards from the instant of the rotation process.
-- The last period starts at the latest of the following instants that lies before the rotation instant:
+- The shortest type of rotation period starts from the rotation instant into the past.
+- Each consecutive type of rotation period continues into the past from where the next shorter type ended.
+- Rotation period types configured to not retain any snapshots are ignored in this scheme.
+- Each period starts at a preset instant: 
 
-  | Rotation period  | Starts at                                                          |
-  |------------------|--------------------------------------------------------------------|
-  | `quarter-hourly` | :00, :15, :30 or :45 in the current hour                           |
-  | `hourly`         | :00 in the current hour                                            |
-  | `daily`          | 00:00 on the current day                                           |
-  | `weekly`         | 00:00 on Monday of the current week                                |
-  | `monthly`        | 00:00 on the first day of the current month                        |
-  | `quarter-yearly` | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
-  | `yearly`         | 00:00 on Jan 1 of the current year                                 |
+  | Type of rotation period | Starting instant rounded down to                                   |
+  |-------------------------|--------------------------------------------------------------------|
+  | `quarter-hourly`        | :00, :15, :30 or :45 in the current hour                           |
+  | `hourly`                | :00 in the current hour                                            |
+  | `daily`                 | 00:00 on the current day                                           |
+  | `weekly`                | 00:00 on Monday of the current week                                |
+  | `monthly`               | 00:00 on the first day of the current month                        |
+  | `quarter-yearly`        | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
+  | `yearly`                | 00:00 on Jan 1 of the current year                                 |
 
   These instants refer to the timezone of the system running this script.
 
@@ -183,7 +185,7 @@ The following field names are available for formatting:
 |-----------------|:------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `server`        |                                  `str`                                   | Server name, same as `server` in the [configuration file](#creating-the-configuration-file)                                                                                                                                                                                      |
 | `period_type`   |                                  `str`                                   | Type of period: `quarter-hourly`, `hourly`, ... `yearly`, or `latest` for a new snapshot that is not contained in any period                                                                                                                                                     |
-| `period_number` |                                  `int`                                   | Rotation number of the period: `1` = latest, `2` = next to latest and so on; always `0` for for a new snapshot with period `latest`                                                                                                                                              |
+| `period_number` |                                  `int`                                   | Rotation number of the period: `1` = latest, `2` = next to latest and so on; always `0` for a new snapshot with period `latest`                                                                                                                                                  |
 | `timestamp`     | [`datetime.datetime`](https://docs.python.org/3.8/library/datetime.html) | _Creation_ instant of the snapshot (_not changed by rotation_), expressed in the timezone of the system running this script. [`datetime`-specific formatting](https://docs.python.org/3.10/library/datetime.html#strftime-and-strptime-format-codes) may be used for this field. |
 | `env`           |                               `dict[str]`                                | Environment variables, may be referred to like e.g. `env[USER]`                                                                                                                                                                                                                  |
 

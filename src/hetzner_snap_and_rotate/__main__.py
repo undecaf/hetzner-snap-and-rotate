@@ -42,6 +42,7 @@ def main() -> int:
                     if caught:
                         raise caught
 
+                # Rotate existing snapshots of this server if so configured
                 if srv.config.rotate:
                     sn_len = len(srv.snapshots)
                     log(f'Server [{srv.name}]: {sn_len} snapshot{"s"[:sn_len!=1]} before rotation', LOG_DEBUG)
@@ -53,13 +54,15 @@ def main() -> int:
                     to_delete: set[Snapshot] = set(srv.snapshots)
                     to_rename: dict[Snapshot, tuple[Period, int]] = {}
 
-                    now = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
+                    # Always keep the snapshot that has just been created
+                    to_delete.discard(new_snapshot)
+
+                    p_end = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
 
                     for p in Period:
                         p_count = getattr(srv.config, p.config_name, 0) or 0
-                        p_end = now
 
-                        for p_num, p_start in enumerate(p.previous_periods(now, p_count),
+                        for p_num, p_start in enumerate(p.previous_periods(p_end, p_count),
                                                         start=1):
                             p_sn = Snapshots.most_recent(p_start, p_end, srv.snapshots)
                             if p_sn:
