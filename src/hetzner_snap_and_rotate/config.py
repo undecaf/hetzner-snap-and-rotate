@@ -3,7 +3,7 @@ import sys
 
 from argparse import ArgumentParser
 from datetime import datetime, timezone
-from typing import Union
+from typing import Optional
 
 from dataclass_wizard import JSONWizard
 from dataclasses import dataclass, field
@@ -16,9 +16,9 @@ from syslog import (
 from hetzner_snap_and_rotate.__version__ import __version__
 
 
-OptionalBool = Union[bool, None]
-OptionalStr = Union[str, None]
-OptionalInt = Union[int, None]
+OptionalBool = Optional[bool]
+OptionalStr = Optional[str]
+OptionalInt = Optional[int]
 
 
 @dataclass(kw_only=True)

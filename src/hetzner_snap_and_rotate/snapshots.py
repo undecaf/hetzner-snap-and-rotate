@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from random import randint
 from syslog import LOG_INFO, LOG_NOTICE
-from typing import Union
+from typing import Optional
 
 from hetzner_snap_and_rotate.api import Page, api_request, ActionWrapper
 from hetzner_snap_and_rotate.config import config
@@ -110,7 +110,7 @@ class Snapshots(Page, JSONWizard):
         )
 
     @staticmethod
-    def most_recent(start: datetime, end: datetime, snapshots: list[Snapshot]) -> Union[Snapshot, None]:
+    def most_recent(start: datetime, end: datetime, snapshots: list[Snapshot]) -> Optional[Snapshot]:
         if start > end:
             start, end = end, start
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from syslog import LOG_NOTICE, LOG_INFO, LOG_WARNING
-from typing import Type, Union
+from typing import Type, Optional
 
 from hetzner_snap_and_rotate.api import api_request, ApiError, Page, ActionWrapper, RecoverableError
 from hetzner_snap_and_rotate.config import Config, config as global_config
@@ -112,7 +112,7 @@ class Server(JSONWizard):
 
     def snapshot_name(self,
                       timestamp: datetime = datetime.now(tz=global_config.local_tz),
-                      period: Union[Period, None] = None,
+                      period: Optional[Period] = None,
                       period_number: int = 0):
 
         # Express the timestamp in the local timezone

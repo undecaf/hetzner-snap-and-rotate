@@ -6,7 +6,7 @@ from dataclass_wizard import JSONWizard
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Union
+from typing import Optional
 
 from hetzner_snap_and_rotate.config import config
 
@@ -61,7 +61,7 @@ class Page(JSONWizard):
         @dataclass(kw_only=True)
         class Pagination:
             page: int
-            next_page: Union[int, None]
+            next_page: Optional[int]
 
         pagination: Pagination
 
@@ -106,7 +106,7 @@ class Action(JSONWizard):
     id: int
     command: str
     status: ActionStatus
-    error: Union[dict, None]
+    error: Optional[dict]
 
     def load_status(self) -> ActionStatus:
 
