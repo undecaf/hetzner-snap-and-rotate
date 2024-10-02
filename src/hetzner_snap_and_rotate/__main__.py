@@ -51,32 +51,40 @@ def main() -> int:
 
                     # Find out which snapshots to preserve for the configured rotation periods,
                     # and note the new rotation period they are now associated with
-                    to_delete: set[Snapshot] = set(srv.snapshots)
-                    to_rename: dict[Snapshot, tuple[Period, int]] = {}
+                    not_rotated: list[Snapshot] = list(srv.snapshots)
+                    rotated: dict[Snapshot, tuple[Period, int]] = {}
 
                     # Always keep the snapshot that has just been created
-                    to_delete.discard(new_snapshot)
+                    not_rotated.remove(new_snapshot)
 
                     p_end = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
 
                     for p in Period:
                         p_count = getattr(srv.config, p.config_name, 0) or 0
+                        p_num = 1
 
-                        for p_num, p_start in enumerate(p.previous_periods(p_end, p_count),
-                                                        start=1):
-                            p_sn = Snapshots.most_recent(p_start, p_end, srv.snapshots)
-                            if p_sn:
-                                to_delete.discard(p_sn)
-                                to_rename[p_sn] = (p, p_num)
+                        if p_count > 0:
+                            # Depending on the snapshot instant, the first rotation period
+                            # may never contain a snapshot, so allow for an extra period
+                            for p_start in p.previous_periods(p_end, p_count + 1):
+                                if p_num > p_count:
+                                    break
 
-                            p_end = p_start
+                                p_sn = Snapshots.most_recent(p_start, p_end, not_rotated)
+
+                                if p_sn:
+                                    not_rotated.remove(p_sn)
+                                    rotated[p_sn] = (p, p_num)
+
+                                    p_end = p_start
+                                    p_num += 1
 
                     # Rename the snapshots which are now associated with a different rotation period
-                    for sn, (p, p_num) in to_rename.items():
+                    for sn, (p, p_num) in rotated.items():
                         sn.rename(period=p, period_number=p_num)
 
                     # Delete the snapshots which are not contained in any rotation period
-                    for sn in to_delete:
+                    for sn in not_rotated:
                         sn.delete(srv)
 
                     sn_len = len(srv.snapshots)
