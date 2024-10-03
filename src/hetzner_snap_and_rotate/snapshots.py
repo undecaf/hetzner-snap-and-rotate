@@ -20,14 +20,14 @@ class Snapshot(JSONWizard):
     created: datetime = field(compare=False)
     created_from: Server = field(compare=False)
 
-    def rename(self, period: Period, period_number: int):
+    def rename(self, created_from: Server, period: Period, period_number: int):
 
         @dataclass(kw_only=True)
         class Wrapper(JSONWizard):
             image: Snapshot
 
-        description = self.created_from.snapshot_name(timestamp=self.created,
-                                                      period=period, period_number=period_number)
+        description = created_from.snapshot_name(timestamp=self.created, period=period, period_number=period_number)
+
         if description != self.description:
             log(f'Server [{self.created_from.name}]: renaming [{self.description}] to [{description}]', LOG_NOTICE)
 

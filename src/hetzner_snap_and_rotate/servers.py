@@ -41,6 +41,7 @@ class Server(JSONWizard):
     id: int
     name: str
     status: ServerStatus = None
+    labels: dict = field(default_factory=dict)
     config: Config.Server = field(init=False)
     snapshots: list = field(default_factory=list)
 
@@ -125,7 +126,8 @@ class Server(JSONWizard):
             period_type=period.config_name if period is not None else 'latest',
             period_number=period_number,
             timestamp=timestamp,
-            env=os.environ
+            env=os.environ,
+            labels=self.labels
         )
 
         return result

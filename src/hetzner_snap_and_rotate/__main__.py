@@ -81,7 +81,7 @@ def main() -> int:
 
                     # Rename the snapshots which are now associated with a different rotation period
                     for sn, (p, p_num) in rotated.items():
-                        sn.rename(period=p, period_number=p_num)
+                        sn.rename(created_from=srv, period=p, period_number=p_num)
 
                     # Delete the snapshots which are not contained in any rotation period
                     for sn in not_rotated:
@@ -94,7 +94,7 @@ def main() -> int:
 
             except Exception as ex:
                 log(repr(ex), LOG_ERR)
-                
+
     except Exception as ex:
         log(repr(ex), LOG_ERR)
 
