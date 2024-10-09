@@ -53,7 +53,7 @@ class Config(JSONWizard):
                     setattr(self, attr, getattr(default, attr, None))
 
             if self.create_snapshot and not self.snapshot_name:
-                raise ValueError(f'No snapshot name specified for server [{self.name}]')
+                raise ValueError(f'No snapshot name pattern specified for server [{self.name}]')
 
     api_token: str = field(default=None)
     defaults: Defaults = field(default=None)

@@ -111,27 +111,6 @@ class Server(JSONWizard):
                     self.perform_action(ServerAction.POWER_OFF, timeout = self.config.shutdown_timeout)
                     log(f'Server [{self.name}]: has been powered off', LOG_INFO)
 
-    def snapshot_name(self,
-                      timestamp: datetime = datetime.now(tz=global_config.local_tz),
-                      period: Optional[Period] = None,
-                      period_number: int = 0):
-
-        # Express the timestamp in the local timezone
-        timestamp = timestamp.astimezone(global_config.local_tz)
-
-        # Build the snapshot name by applying string.Formatter.format to the template,
-        # see https://docs.python.org/3/library/string.html#format-string-syntax
-        result = self.config.snapshot_name.format(
-            server=self.name,
-            period_type=period.config_name if period is not None else 'latest',
-            period_number=period_number,
-            timestamp=timestamp,
-            env=os.environ,
-            labels=self.labels
-        )
-
-        return result
-
 
 @dataclass(kw_only=True)
 class Servers(Page, JSONWizard):

@@ -1,3 +1,5 @@
+import os
+
 from dataclass_wizard import JSONWizard
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -19,6 +21,36 @@ class Snapshot(JSONWizard):
     description: str = field(compare=False)
     created: datetime = field(compare=False)
     created_from: Server = field(compare=False)
+    labels: dict = field(default_factory=dict, compare=False)
+
+    @staticmethod
+    def snapshot_name(server: Server,
+                      snapshot=None,
+                      period: Optional[Period] = None,
+                      period_number: int = 0):
+
+        if snapshot is None:
+            # Use the current timestamp and the server labels for formatting
+            timestamp = datetime.now(tz=config.local_tz)
+            labels = server.labels
+
+        else:
+            # Use the snapshot creation timestamp and labels for formatting
+            timestamp = snapshot.created.astimezone(tz=config.local_tz)
+            labels = snapshot.labels
+
+        # Build the snapshot name by applying string.Formatter.format to the template,
+        # see https://docs.python.org/3/library/string.html#format-string-syntax
+        result = server.config.snapshot_name.format(
+            server=server.name,
+            period_type=period.config_name if period is not None else 'latest',
+            period_number=period_number,
+            timestamp=timestamp,
+            env=os.environ,
+            label=labels
+        )
+
+        return result
 
     def rename(self, created_from: Server, period: Period, period_number: int):
 
@@ -26,7 +58,8 @@ class Snapshot(JSONWizard):
         class Wrapper(JSONWizard):
             image: Snapshot
 
-        description = created_from.snapshot_name(timestamp=self.created, period=period, period_number=period_number)
+        description = Snapshot.snapshot_name(server=created_from, snapshot=self,
+                                             period=period, period_number=period_number)
 
         if description != self.description:
             log(f'Server [{self.created_from.name}]: renaming [{self.description}] to [{description}]', LOG_NOTICE)
@@ -70,9 +103,10 @@ class SnapshotWrapper(ActionWrapper, JSONWizard):
 # Ugly hack -- this should be a method of class servers.Sever
 # but this would lead to a circular depencency
 def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
-    description = server.snapshot_name()
+    description = Snapshot.snapshot_name(server=server)
     data = {
         'description': description,
+        'labels': server.labels,
         'type': 'snapshot'
     }
 

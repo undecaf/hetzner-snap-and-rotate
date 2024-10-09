@@ -4,7 +4,7 @@
   "defaults": {
       "create-snapshot": true,
       "snapshot-timeout": 120,
-      "snapshot-name": "{server}_{period_type}#{period_number}_{timestamp:%Y-%m-%d_%H:%M:%S}_by_{env[USER]}",
+      "snapshot-name": "{server}-{label[VERSION]}_{period_type}#{period_number}_{timestamp:%Y-%m-%d_%H:%M:%S}_by_{env[USER]}",
       "shutdown-and-restart": true,
       "shutdown-timeout": 15,
       "allow-poweroff": false,
