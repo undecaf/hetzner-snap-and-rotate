@@ -67,7 +67,7 @@ class TestConfig(TestCase):
         ('missing', "FileNotFoundError(2, 'No such file or directory')"),
         ('blank', "JSONDecodeError('Expecting value: line 1 column 1 (char 0)')"),
         ('empty', "ValueError('No API token specified')"),
-        ('no-snapshot-name', "ValueError('No snapshot name specified for server [server-1]')"),
+        ('no-snapshot-name', "ValueError('No snapshot name pattern specified for server [server-1]')"),
     ])
     def test_read_invalid_config(self, file_name: str, expected_err: str):
         with patch('sys.stderr', new=StringIO()) as mocked_stderr:

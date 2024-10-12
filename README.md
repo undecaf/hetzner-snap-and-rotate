@@ -129,8 +129,11 @@ as a valid JSON file without comments.
 ### Taking snapshots
 
 This script takes a snapshot of every `server` in the configuration file
-for which `create-snapshot` is `true`. If taking the snapshot takes longer 
-than `snapshot-timeout` then that operation is considered to have failed.
+for which `create-snapshot` is `true`. Each of these snapshots also stores a copy
+of the current server labels.
+
+If taking the snapshot takes longer than `snapshot-timeout` then that operation
+is considered to have failed.
 
 If `shutdown-and-restart` is `true` and the server is running
 then the script attempts to shut down the server gracefully before taking the snapshot.
@@ -145,16 +148,18 @@ This script rotates the snapshots of every `server` in the configuration file
 for which `rotate-snapshots` is `true`.
 
 "Rotating" means that existing snapshots will be renamed
-according to `snapshot-name`, or will be deleted if they are not contained in any of the
-configured `quarter-hourly`, `hourly`, ... `yearly` periods. These settings determine
-for how many such periods the snapshots will be retained.
+according to `snapshot-name`, or will be deleted if they
+are not contained in any of the configured `quarter-hourly`, `hourly`, ... `yearly`
+periods. Those settings determine for how many such periods the snapshots will be retained.
+
+Snapshots that have been protected are preserved during rotation.
 
 The rotation process is controlled by the following rules:
 
+- Rotation period types configured to not retain any snapshots are ignored.
 - The shortest type of rotation period starts from the rotation instant into the past.
 - Each consecutive type of rotation period continues into the past from where the next shorter type ended.
-- Rotation period types configured to not retain any snapshots are ignored in this scheme.
-- Each period starts at a preset instant: 
+- Rotation periods begin at certain instants: 
 
   | Type of rotation period | Starting instant rounded down to                                   |
   |-------------------------|--------------------------------------------------------------------|

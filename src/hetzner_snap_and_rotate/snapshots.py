@@ -14,11 +14,18 @@ from hetzner_snap_and_rotate.periods import Period
 from hetzner_snap_and_rotate.servers import Server, ServerAction
 
 
+@dataclass(kw_only=True)
+class Protection(JSONWizard):
+
+    delete: bool
+
+
 @dataclass(kw_only=True, unsafe_hash=True)
 class Snapshot(JSONWizard):
 
     id: int
     description: str = field(compare=False)
+    protection: Protection = field(compare=False)
     created: datetime = field(compare=False)
     created_from: Server = field(compare=False)
     labels: dict = field(default_factory=dict, compare=False)
@@ -81,17 +88,21 @@ class Snapshot(JSONWizard):
                 self.description = description
 
     def delete(self, server: Server):
-        log(f'Server [{server.name}]: deleting snapshot [{self.description}]', LOG_NOTICE)
-        if not config.dry_run:
-            api_request(
-                method='DELETE',
-                return_type=None,
-                api_path=f'images/{self.id}',
-                api_token=config.api_token
-            )
-            log(f'Server [{server.name}]: snapshot [{self.description}] has been deleted', LOG_INFO)
+        if self.protection is None or not self.protection.delete:
+            log(f'Server [{server.name}]: deleting snapshot [{self.description}]', LOG_NOTICE)
+            if not config.dry_run:
+                api_request(
+                    method='DELETE',
+                    return_type=None,
+                    api_path=f'images/{self.id}',
+                    api_token=config.api_token
+                )
+                log(f'Server [{server.name}]: snapshot [{self.description}] has been deleted', LOG_INFO)
 
-        server.snapshots.remove(self)
+            server.snapshots.remove(self)
+
+        else:
+            log(f'Server [{server.name}]: preserving protected snapshot [{self.description}]', LOG_NOTICE)
 
 
 @dataclass(kw_only=True)
@@ -122,6 +133,7 @@ def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
         snapshot = Snapshot(
             id=randint(1000000, 9999999),
             description=description,
+            protection=Protection(delete=False),
             created=datetime.now(tz=timezone.utc),
             created_from=server
         )
