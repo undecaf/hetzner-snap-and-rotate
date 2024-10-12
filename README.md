@@ -152,33 +152,20 @@ according to `snapshot-name`, or will be deleted if they
 are not contained in any of the configured `quarter-hourly`, `hourly`, ... `yearly`
 periods. Those settings determine for how many such periods the snapshots will be retained.
 
-Snapshots that have been protected are preserved during rotation.
+Snapshots that have been protected are neither renamed nor deleted during rotation.
+Nevertheless, they are taken into account in the rotation process.
 
-The rotation process is controlled by the following rules:
+Rotating snapshots is controlled by the following rules:
 
-- Rotation period types configured to not retain any snapshots are ignored.
-- The shortest type of rotation period starts from the rotation instant into the past.
-- Each consecutive type of rotation period continues into the past from where the next shorter type ended.
-- Rotation periods begin at certain instants: 
-
-  | Type of rotation period | Starting instant rounded down to                                   |
-  |-------------------------|--------------------------------------------------------------------|
-  | `quarter-hourly`        | :00, :15, :30 or :45 in the current hour                           |
-  | `hourly`                | :00 in the current hour                                            |
-  | `daily`                 | 00:00 on the current day                                           |
-  | `weekly`                | 00:00 on Monday of the current week                                |
-  | `monthly`               | 00:00 on the first day of the current month                        |
-  | `quarter-yearly`        | 00:00 on the first day of Jan, Apr, Jul or Oct of the current year |
-  | `yearly`                | 00:00 on Jan 1 of the current year                                 |
-
-  These instants refer to the timezone of the system running this script.
-
-- If a period contains multiple snapshots then only the most recent one will be retaind for that period.
+- Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) configured to not retain any snapshots are ignored.
+- Periods are counted backwards from the present into the past.
+- The shortest periods start at the instant of rotation.
+- Periods of a certain length immediately precede the next shorter periods.
+- If a period contains multiple snapshots then only the oldest one will be retaind for that period.
 - Retaining a snapshot for some period takes precedence over deleting that snapshot for some other period.
-- Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name,
-the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
+- Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name and 
+  labels, the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
 See section [Snapshot name templates](#snapshot-name-templates) below for details.
-- If the same snapshot is contained in multiple periods then `snapshot-name` uses the longest period.
 
 
 ### Snapshot name templates

@@ -8,43 +8,46 @@ from hetzner_snap_and_rotate.periods import Period
 class TestPeriod(TestCase):
 
     @parameterized.expand([
-        [datetime(2024, 3, 1, 0, 20), Period.QUARTER_HOURLY, [
-            datetime(2024, 3, 1, 0, 15),
-            datetime(2024, 3, 1, 0, 0),
-            datetime(2024, 2, 29, 23, 45),
+        [datetime.fromisoformat('2024-03-01T00:20:00'), Period.QUARTER_HOURLY, [
+            datetime.fromisoformat('2024-03-01T00:05:00'),
+            datetime.fromisoformat('2024-02-29T23:50:00'),
         ]],
-        [datetime(2024, 3, 1, 1, 20), Period.HOURLY, [
+
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.HOURLY, []],
+
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.HOURLY, [
+            datetime.fromisoformat('2024-03-01T01:20:00'),
+            datetime.fromisoformat('2024-03-01T00:20:00'),
+            datetime.fromisoformat('2024-02-29T23:20:00'),
         ]],
-        [datetime(2024, 3, 1, 1, 20), Period.HOURLY, [
-            datetime(2024, 3, 1, 1, 0),
-            datetime(2024, 3, 1, 0, 0),
-            datetime(2024, 2, 29, 23, 0),
+
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.DAILY, [
+            datetime.fromisoformat('2024-02-29T02:20:00'),
+            datetime.fromisoformat('2024-02-28T02:20:00'),
+            datetime.fromisoformat('2024-02-27T02:20:00'),
         ]],
-        [datetime(2024, 3, 1, 2, 20), Period.DAILY, [
-            datetime(2024, 3, 1, 0, 0),
-            datetime(2024, 2, 29, 0, 0),
-            datetime(2024, 2, 28, 0, 0),
+
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.WEEKLY, [
+            datetime.fromisoformat('2024-02-23T02:20:00'),
+            datetime.fromisoformat('2024-02-16T02:20:00'),
         ]],
-        [datetime(2024, 3, 1, 2, 20), Period.WEEKLY, [
-            datetime(2024, 2, 26, 0, 0),
-            datetime(2024, 2, 19, 0, 0),
+
+        [datetime.fromisoformat('2024-01-31T02:20:00'), Period.MONTHLY, [
+            datetime.fromisoformat('2023-12-31T02:20:00'),
+            datetime.fromisoformat('2023-11-30T02:20:00'),
+            datetime.fromisoformat('2023-10-30T02:20:00'),
         ]],
-        [datetime(2024, 1, 31, 2, 20), Period.MONTHLY, [
-            datetime(2024, 1, 1, 0, 0),
-            datetime(2023, 12, 1, 0, 0),
-            datetime(2023, 11, 1, 0, 0),
+
+        [datetime.fromisoformat('2024-01-31T02:20:00'), Period.QUARTER_YEARLY, [
+            datetime.fromisoformat('2023-10-31T02:20:00'),
+            datetime.fromisoformat('2023-07-31T02:20:00'),
+            datetime.fromisoformat('2023-04-30T02:20:00'),
+            datetime.fromisoformat('2023-01-30T02:20:00'),
         ]],
-        [datetime(2024, 1, 31, 2, 20), Period.QUARTER_YEARLY, [
-            datetime(2024, 1, 1, 0, 0),
-            datetime(2023, 10, 1, 0, 0),
-            datetime(2023, 7, 1, 0, 0),
-            datetime(2023, 4, 1, 0, 0),
-            datetime(2023, 1, 1, 0, 0),
-        ]],
-        [datetime(2024, 2, 29, 2, 20), Period.YEARLY, [
-            datetime(2024, 1, 1, 0, 0),
-            datetime(2023, 1, 1, 0, 0),
-            datetime(2022, 1, 1, 0, 0),
+
+        [datetime.fromisoformat('2024-02-29T02:20:00'), Period.YEARLY, [
+            datetime.fromisoformat('2023-02-28T02:20:00'),
+            datetime.fromisoformat('2022-02-28T02:20:00'),
         ]],
     ])
     def test_previous_periods(self, start: datetime, period: Period, periods: list[datetime]):

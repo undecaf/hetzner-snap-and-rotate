@@ -2,11 +2,42 @@ import sys
 
 from datetime import datetime, timezone
 from syslog import LOG_DEBUG, LOG_ERR
+from typing import Dict, Tuple
 
+from hetzner_snap_and_rotate.config import Config
 from hetzner_snap_and_rotate.logger import log
 from hetzner_snap_and_rotate.periods import Period
 from hetzner_snap_and_rotate.servers import Servers, ServerStatus
 from hetzner_snap_and_rotate.snapshots import Snapshots, create_snapshot, Snapshot
+
+
+Rotated = Dict[Snapshot, Tuple[Period, int]]
+
+
+def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime) -> Rotated:
+    rotated: Rotated = {}
+
+    for p in Period:
+        p_count = getattr(config, p.config_name, 0) or 0
+        p_num = 1
+
+        if p_count > 0:
+            # Depending on the snapshot instant, the first rotation period
+            # may never contain a snapshot, so allow for an extra period
+            for p_start in p.previous_periods(p_end, p_count + 1):
+                if p_num > p_count:
+                    break
+
+                p_sn = Snapshots.oldest(p_start, p_end, not_rotated)
+
+                if p_sn:
+                    not_rotated.remove(p_sn)
+                    rotated[p_sn] = (p, p_num)
+
+                    p_end = p_start
+                    p_num += 1
+
+    return rotated
 
 
 def main() -> int:
@@ -52,34 +83,14 @@ def main() -> int:
                     # Find out which snapshots to preserve for the configured rotation periods,
                     # and note the new rotation period they are now associated with
                     not_rotated: list[Snapshot] = list(srv.snapshots)
-                    rotated: dict[Snapshot, tuple[Period, int]] = {}
 
                     # Always keep the snapshot that has just been created
                     not_rotated.remove(new_snapshot)
 
                     p_end = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
+                    rotated = rotate(config=srv.config, not_rotated=not_rotated, p_end=p_end)
 
-                    for p in Period:
-                        p_count = getattr(srv.config, p.config_name, 0) or 0
-                        p_num = 1
-
-                        if p_count > 0:
-                            # Depending on the snapshot instant, the first rotation period
-                            # may never contain a snapshot, so allow for an extra period
-                            for p_start in p.previous_periods(p_end, p_count + 1):
-                                if p_num > p_count:
-                                    break
-
-                                p_sn = Snapshots.most_recent(p_start, p_end, not_rotated)
-
-                                if p_sn:
-                                    not_rotated.remove(p_sn)
-                                    rotated[p_sn] = (p, p_num)
-
-                                    p_end = p_start
-                                    p_num += 1
-
-                    # Rename the snapshots which are now associated with a different rotation period
+                   # Rename the snapshots which are now associated with a different rotation period
                     for sn, (p, p_num) in rotated.items():
                         sn.rename(created_from=srv, period=p, period_number=p_num)
 

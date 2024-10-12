@@ -69,23 +69,27 @@ class Snapshot(JSONWizard):
                                              period=period, period_number=period_number)
 
         if description != self.description:
-            log(f'Server [{self.created_from.name}]: renaming [{self.description}] to [{description}]', LOG_NOTICE)
+            if self.protection is None or not self.protection.delete:
+                log(f'Server [{self.created_from.name}]: renaming [{self.description}] to [{description}]', LOG_NOTICE)
 
-            if not config.dry_run:
-                wrapper = api_request(
-                    method='PUT',
-                    return_type=Wrapper,
-                    api_path=f'images/{self.id}',
-                    api_token=config.api_token,
-                    data={'description': description}
-                )
-                log(f'Server [{self.created_from.name}]: snapshot [{self.description}] '
-                    f'has been renamed to [{wrapper.image.description}]',
-                    LOG_INFO)
-                self.description = wrapper.image.description
+                if not config.dry_run:
+                    wrapper = api_request(
+                        method='PUT',
+                        return_type=Wrapper,
+                        api_path=f'images/{self.id}',
+                        api_token=config.api_token,
+                        data={'description': description}
+                    )
+                    log(f'Server [{self.created_from.name}]: snapshot [{self.description}] '
+                        f'has been renamed to [{wrapper.image.description}]',
+                        LOG_INFO)
+                    self.description = wrapper.image.description
+
+                else:
+                    self.description = description
 
             else:
-                self.description = description
+                log(f'Server [{self.created_from.name}]: NOT renaming protected snapshot [{self.description}]', LOG_NOTICE)
 
     def delete(self, server: Server):
         if self.protection is None or not self.protection.delete:
@@ -102,7 +106,7 @@ class Snapshot(JSONWizard):
             server.snapshots.remove(self)
 
         else:
-            log(f'Server [{server.name}]: preserving protected snapshot [{self.description}]', LOG_NOTICE)
+            log(f'Server [{server.name}]: NOT deleting protected snapshot [{self.description}]', LOG_NOTICE)
 
 
 @dataclass(kw_only=True)
@@ -156,14 +160,13 @@ class Snapshots(Page, JSONWizard):
         )
 
     @staticmethod
-    def most_recent(start: datetime, end: datetime, snapshots: list[Snapshot]) -> Optional[Snapshot]:
+    def oldest(start: datetime, end: datetime, snapshots: list[Snapshot]) -> Optional[Snapshot]:
         if start > end:
             start, end = end, start
 
         matching = sorted(
             filter(lambda s: start <= s.created < end, snapshots),
-            key=lambda s: s.created,
-            reverse=True
+            key=lambda s: s.created
         )
 
         return matching[0] if len(matching) else None
