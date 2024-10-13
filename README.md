@@ -157,12 +157,11 @@ Nevertheless, they are taken into account in the rotation process.
 
 Rotating snapshots is controlled by the following rules:
 
-- Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) configured to not retain any snapshots are ignored.
+- Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) that were set to zero are ignored.
 - Periods are counted backwards from the present into the past.
-- The shortest periods start at the instant of rotation.
-- Periods of a certain length immediately precede the next shorter periods.
-- If a period contains multiple snapshots then only the oldest one will be retaind for that period.
-- Retaining a snapshot for some period takes precedence over deleting that snapshot for some other period.
+- The sequence of the shortest period type start at the instant of rotation.
+- The sequence of any other period type immediately precedes the sequence of the next shorter period type.
+- If a period contains multiple snapshots then only the oldest one will be retained for that period.
 - Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name and 
   labels, the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
 See section [Snapshot name templates](#snapshot-name-templates) below for details.
@@ -182,8 +181,6 @@ The following field names are available for formatting:
 | `period_number` |                                  `int`                                   | Rotation number of the period: `1` = latest, `2` = next to latest and so on; always `0` for a new snapshot with period `latest`                                                                                                                                                  |
 | `env`           |                               `dict[str]`                                | Value of an environment variable at the creation or rotation instant of the snapshot, may be referred to as e.g. `env[USER]`                                                                                                                                                     |
 
-If the same snapshot is contained in multiple periods then the longest period
-determines `period_type` and `period_number`.
 
 
 ## Running the script natively
