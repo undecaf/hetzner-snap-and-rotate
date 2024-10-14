@@ -159,8 +159,8 @@ Rotating snapshots is controlled by the following rules:
 
 - Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) that were set to zero are ignored.
 - Periods are counted backwards from the present into the past.
-- The sequence of the shortest period type start at the instant of rotation.
-- The sequence of any other period type immediately precedes the sequence of the next shorter period type.
+- The first period is the shortest period immediately preceding the instant of rotation.
+- Other periods immediately precede the next shorter periods without gaps.
 - If a period contains multiple snapshots then only the oldest one will be retained for that period.
 - Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name and 
   labels, the period, the snapshot timestamp and environment variables to become part of the snapshot name.  

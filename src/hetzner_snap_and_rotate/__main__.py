@@ -16,18 +16,17 @@ Rotated = Dict[Snapshot, Tuple[Period, int]]
 
 def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime) -> Rotated:
     rotated: Rotated = {}
+    at_start_of_period = False
 
     for p in Period:
         p_count = getattr(config, p.config_name, 0) or 0
-        p_num = 1
 
         if p_count > 0:
-            # Depending on the snapshot instant, the first rotation period
-            # may never contain a snapshot, so allow for an extra period
-            for p_start in p.previous_periods(p_end, p_count + 1):
-                if p_num > p_count:
-                    break
+            if not at_start_of_period:
+                p_end = p.start_of_period(p_end)
+                at_start_of_period = True
 
+            for p_num, p_start in enumerate(p.previous_periods(p_end, p_count), start=1):
                 p_sn = Snapshots.oldest(p_start, p_end, not_rotated)
 
                 if p_sn:
@@ -35,7 +34,6 @@ def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime
                     rotated[p_sn] = (p, p_num)
 
                     p_end = p_start
-                    p_num += 1
 
     return rotated
 

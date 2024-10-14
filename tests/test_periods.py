@@ -8,6 +8,18 @@ from hetzner_snap_and_rotate.periods import Period
 class TestPeriod(TestCase):
 
     @parameterized.expand([
+        [datetime.fromisoformat('2024-03-01T00:20:00'), Period.QUARTER_HOURLY, datetime.fromisoformat('2024-03-01T00:15:00')],
+        [datetime.fromisoformat('2024-03-01T01:20:00'), Period.HOURLY, datetime.fromisoformat('2024-03-01T01:00:00')],
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.DAILY, datetime.fromisoformat('2024-03-01T00:00:00')],
+        [datetime.fromisoformat('2024-03-01T02:20:00'), Period.WEEKLY, datetime.fromisoformat('2024-02-26T00:00:00')],
+        [datetime.fromisoformat('2024-01-31T02:20:00'), Period.MONTHLY, datetime.fromisoformat('2024-01-01T00:00:00')],
+        [datetime.fromisoformat('2024-01-31T02:20:00'), Period.QUARTER_YEARLY, datetime.fromisoformat('2024-01-01T00:00:00')],
+        [datetime.fromisoformat('2024-02-29T02:20:00'), Period.YEARLY, datetime.fromisoformat('2024-01-01T00:00:00')],
+    ])
+    def test_start_of_period(self, t: datetime, period: Period, expected: datetime):
+        self.assertEqual(expected, period.start_of_period(t))
+
+    @parameterized.expand([
         [datetime.fromisoformat('2024-03-01T00:20:00'), Period.QUARTER_HOURLY, [
             datetime.fromisoformat('2024-03-01T00:05:00'),
             datetime.fromisoformat('2024-02-29T23:50:00'),

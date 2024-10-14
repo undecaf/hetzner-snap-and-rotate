@@ -44,25 +44,25 @@ class MainTest(TestCase):
             datetime.fromisoformat('2024-03-15T00:35:00'),
             [
                 SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:30:00')),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:20:00'), period=Period.QUARTER_HOURLY, p_num=1),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:15:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:20:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:15:00'), period=Period.QUARTER_HOURLY, p_num=1),
                 SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:05:00'), period=Period.QUARTER_HOURLY, p_num=2),
             ]
         ],
 
         # No snapshot in the first quarter-hourly period
         [
-            Config.Defaults(quarter_hourly=2, hourly=2),
+            Config.Defaults(quarter_hourly=2, hourly=4),
             datetime.fromisoformat('2024-03-15T00:35:00'),
             [
                 SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:29:00')),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:20:00'), period=Period.QUARTER_HOURLY, p_num=1),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:15:00')),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:05:00'), period=Period.QUARTER_HOURLY, p_num=2),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:00:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:20:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:15:00'), period=Period.QUARTER_HOURLY, p_num=1),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:05:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-15T00:00:00'), period=Period.QUARTER_HOURLY, p_num=2),
                 SnapshotMock(created=datetime.fromisoformat('2024-03-14T23:59:59'), period=Period.HOURLY, p_num=1),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-14T22:00:00')),
-                SnapshotMock(created=datetime.fromisoformat('2024-03-14T20:00:00')),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-14T22:00:00'), period=Period.HOURLY, p_num=2),
+                SnapshotMock(created=datetime.fromisoformat('2024-03-14T20:00:00'), period=Period.HOURLY, p_num=4),
                 SnapshotMock(created=datetime.fromisoformat('2024-03-14T19:00:00')),
             ]
         ],
