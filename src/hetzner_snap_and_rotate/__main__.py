@@ -2,7 +2,7 @@ import sys
 
 from datetime import datetime, timezone
 from syslog import LOG_DEBUG, LOG_ERR
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 from hetzner_snap_and_rotate.config import Config
 from hetzner_snap_and_rotate.logger import log
@@ -11,20 +11,21 @@ from hetzner_snap_and_rotate.servers import Servers, ServerStatus
 from hetzner_snap_and_rotate.snapshots import Snapshots, create_snapshot, Snapshot
 
 
-Rotated = Dict[Snapshot, Tuple[Period, int]]
+# Associates snapshots with their Period type ('latest' if the Period is None) and number
+Rotated = Dict[Snapshot, Tuple[Optional[Period], int]]
 
 
 def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime) -> Rotated:
     rotated: Rotated = {}
-    at_start_of_period = False
+    latest_start = None
 
     for p in Period:
         p_count = getattr(config, p.config_name, 0) or 0
 
         if p_count > 0:
-            if not at_start_of_period:
-                p_end = p.start_of_period(p_end)
-                at_start_of_period = True
+            if latest_start is None:
+                latest_start = p.start_of_period(p_end)
+                p_end = latest_start
 
             for p_num, p_start in enumerate(p.previous_periods(p_end, p_count), start=1):
                 p_sn = Snapshots.oldest(p_start, p_end, not_rotated)
@@ -34,6 +35,12 @@ def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime
                     rotated[p_sn] = (p, p_num)
 
                     p_end = p_start
+
+    # Assign numbers (but no period types) to the latest snapshots,
+    # or to all snapshots if no rotation period was configured
+    for l_num, l_sn in enumerate(Snapshots.latest(latest_start, not_rotated), start=1):
+        not_rotated.remove(l_sn)
+        rotated[l_sn] = (None, l_num)
 
     return rotated
 
@@ -60,7 +67,7 @@ def main() -> int:
 
                         new_snapshot = create_snapshot(srv, srv.config.snapshot_timeout)
 
-                    # If an exception occurred during powering down or snapshotting
+                    # If an exception occurred during powering down or taking the snapshot
                     # then throw it only after having restarted the server, if necessary
                     except Exception as ex:
                         caught = ex
@@ -81,9 +88,6 @@ def main() -> int:
                     # Find out which snapshots to preserve for the configured rotation periods,
                     # and note the new rotation period they are now associated with
                     not_rotated: list[Snapshot] = list(srv.snapshots)
-
-                    # Always keep the snapshot that has just been created
-                    not_rotated.remove(new_snapshot)
 
                     p_end = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
                     rotated = rotate(config=srv.config, not_rotated=not_rotated, p_end=p_end)

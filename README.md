@@ -28,7 +28,6 @@ Additional features:
   - [Command line options](#command-line-options)
   - [Passing the API token](#passing-the-api-token)
   - [Creating and rotating snapshots in a cron job](#creating-and-rotating-snapshots-in-a-cron-job)
-  - [Snapshots seem to be missing after rotation](#snapshots-seem-to-be-missing-after-rotation)
 - [Running the script in a container](#running-the-script-in-a-container)
   - [Passing the configuration file to the container](#passing-the-configuration-file-to-the-container)
   - [Environment variables](#environment-variables)
@@ -149,8 +148,10 @@ for which `rotate-snapshots` is `true`.
 
 "Rotating" means that existing snapshots will be renamed
 according to `snapshot-name`, or will be deleted if they
-are not contained in any of the configured `quarter-hourly`, `hourly`, ... `yearly`
+are no longer contained in any of the configured `quarter-hourly`, `hourly`, ... `yearly`
 periods. Those settings determine for how many such periods the snapshots will be retained.
+
+New snapshots that are _not yet_ contained in any rotation period will be renamed but not deleted.
 
 Snapshots that have been protected are neither renamed nor deleted during rotation.
 Nevertheless, they are taken into account in the rotation process.
@@ -162,7 +163,7 @@ Rotating snapshots is controlled by the following rules:
 - The first period is the shortest period immediately preceding the instant of rotation.
 - Other periods immediately precede the next shorter periods without gaps.
 - If a period contains multiple snapshots then only the oldest one will be retained for that period.
-- Rotated snapshots are renamed according to the template `snapshot-name`. This allows the server name and 
+- New and rotated snapshots are (re)named according to the template `snapshot-name`. This allows the server name and 
   labels, the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
 See section [Snapshot name templates](#snapshot-name-templates) below for details.
 
@@ -170,6 +171,7 @@ See section [Snapshot name templates](#snapshot-name-templates) below for detail
 ### Snapshot name templates
 
 `snapshot-name` must be a string and may contain [Python format strings](https://docs.python.org/3/library/string.html#format-string-syntax).
+Snapshot names should be unique but this is not a requirement.
 The following field names are available for formatting:
 
 | Field name      |                                   Type                                   | Rendered as                                                                                                                                                                                                                                                                      |
@@ -177,8 +179,8 @@ The following field names are available for formatting:
 | `server`        |                                  `str`                                   | Server name, same as `server` in the [configuration file](#creating-the-configuration-file)                                                                                                                                                                                      |
 | `timestamp`     | [`datetime.datetime`](https://docs.python.org/3.8/library/datetime.html) | _Creation_ instant of the snapshot (_not changed by rotation_), expressed in the timezone of the system running this script. [`datetime`-specific formatting](https://docs.python.org/3.10/library/datetime.html#strftime-and-strptime-format-codes) may be used for this field. |
 | `label`         |                               `dict[str]`                                | Value of a server label at the _creation_ instant of the snapshot (_not changed by rotation_), may be referred to as e.g. `label[VERSION]`                                                                                                                                       |
-| `period_type`   |                                  `str`                                   | Type of period: `quarter-hourly`, `hourly`, ... `yearly`, or `latest` for a new snapshot that is not contained in any period                                                                                                                                                     |
-| `period_number` |                                  `int`                                   | Rotation number of the period: `1` = latest, `2` = next to latest and so on; always `0` for a new snapshot with period `latest`                                                                                                                                                  |
+| `period_type`   |                                  `str`                                   | Type of period: `quarter-hourly`, `hourly`, ... `yearly`, or `latest` for new snapshots that have not been rotated yet                                                                                                                                                           |
+| `period_number` |                                  `int`                                   | Rotation number of the period: `1` = latest, `2` = next to latest and so on; also applies to `latest` snapshots                                                                                                                                                                  |
 | `env`           |                               `dict[str]`                                | Value of an environment variable at the creation or rotation instant of the snapshot, may be referred to as e.g. `env[USER]`                                                                                                                                                     |
 
 
@@ -215,16 +217,10 @@ unauthorized access. The following methods are available for passing the API tok
 
 ### Creating and rotating snapshots in a cron job
 
-As a cron job, this script should run at least once per the shortest period for which snapshots are to be retained.  
-If, for example, the shortest retention period has been set to `daily` then the script should run at least daily.
+As a cron job, this script should run once per the shortest period for which snapshots are to be retained.  
+If, for example, the shortest retention period has been set to `daily` then the script should run daily.
 
-
-### Snapshots seem to be missing after rotation
-
-If several types of retention period (e.g. `daily`, `weekly` and `monthly`) have been defined then the latest snapshot
-will be contained in the latest period of each type at the same time.  
-Since the snapshot will be named after the longest period (`monthly`), there will not be any snapshots named 
-after the latest ones of the shorter retention periods (`daily` and `weekly`).
+If the script is run more frequently then several `latest` snapshots will be preserved. 
 
 
 ## Running the script in a container

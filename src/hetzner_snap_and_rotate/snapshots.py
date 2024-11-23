@@ -129,7 +129,9 @@ def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
     if not config.dry_run:
         wrapper = server.perform_action(ServerAction.CREATE_IMAGE, return_type=SnapshotWrapper,
                                         data=data, timeout=timeout)
+        wrapper.image.created_from = server
         server.snapshots.append(wrapper.image)
+
         log(f'Server [{server.name}]: snapshot [{description}] has been created', LOG_INFO)
         return wrapper.image
 
@@ -139,7 +141,8 @@ def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
             description=description,
             protection=Protection(delete=False),
             created=datetime.now(tz=timezone.utc),
-            created_from=server
+            created_from=server,
+            labels=server.labels
         )
         server.snapshots.append(snapshot)
         return snapshot
@@ -170,3 +173,14 @@ class Snapshots(Page, JSONWizard):
         )
 
         return matching[0] if len(matching) else None
+
+    @staticmethod
+    def latest(start: Optional[datetime], snapshots: list[Snapshot]) -> list[Snapshot]:
+        predicate = (lambda s: s.created >= start) if start is not None else (lambda s: True)
+        matching = sorted(
+            filter(predicate, snapshots),
+            key=lambda s: s.created,
+            reverse=True
+        )
+
+        return matching
