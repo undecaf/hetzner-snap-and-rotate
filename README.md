@@ -161,8 +161,16 @@ Rotating snapshots is controlled by the following rules:
 - Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) that were set to zero are ignored.
 - Periods are counted backwards from the present into the past.
 - The first period is the shortest period immediately preceding the instant of rotation.
-- Other periods immediately precede the next shorter periods without gaps.
+- Other periods immediately precede the next shorter periods without gaps. If, for example, the rotation periods
+  were set to `"daily": 3, "monthly": 2, "yearly": 1` then they would be arranged along the timeline like this
+  if a snapshot were taken at Sep 3, 2024 at 12:34:
+
+  ![Example of how periods are arranged along the timeline](./periods.png)
+
+  In this example, `daily` periods become aligned so that they immediately precede the snapshot instant;
+  `monthly` periods become adjacent to `daily`, and `yearly` becomes adjacent to `monthly`. 
 - If a period contains multiple snapshots then only the oldest one will be retained for that period.
+- All snapshots in the `latest` interval will be retained.
 - New and rotated snapshots are (re)named according to the template `snapshot-name`. This allows the server name and 
   labels, the period, the snapshot timestamp and environment variables to become part of the snapshot name.  
 See section [Snapshot name templates](#snapshot-name-templates) below for details.

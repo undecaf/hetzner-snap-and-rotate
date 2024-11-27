@@ -2,5 +2,5 @@
 .idea
 .venv
 .env
-config.json
 dist/
+secret/
