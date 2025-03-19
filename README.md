@@ -3,7 +3,7 @@
 This script can perform the following tasks for selected servers of a [Hetzner cloud project](https://www.hetzner.com/cloud/):
 
 - Creating a new snapshot
-- Shutting down the server before taking a snapshot and restarting it afterwards
+- Shutting down the server before taking a snapshot and restarting it thereafter
 - Rotating snapshots, retaining a limited number of quarter-hourly, hourly, daily, weekly, monthly, quarterly and
   yearly snapshots
 - Generating names of new and rotated snapshots from templates
@@ -159,11 +159,11 @@ Nevertheless, they are taken into account in the rotation process.
 Rotating snapshots is controlled by the following rules:
 
 - Rotation period types (`quarter-hourly`, `hourly`, ... `yearly`) that were set to zero are ignored.
-- Periods are counted backwards from the present into the past.
-- The first period is the shortest period immediately preceding the instant of rotation.
+- Periods are counted backwards from the present towards the past.
+- The first period is the shortest configured period that immediately precedes the instant of rotation.
 - Other periods immediately precede the next shorter periods without gaps. If, for example, the rotation periods
   were set to `"daily": 3, "monthly": 2, "yearly": 1` then they would be arranged along the timeline like this
-  if a snapshot were taken at Sep 3, 2024 at 12:34:
+  if the latest snapshots had been taken on Sep 3, 2024 at 06:00 and 12:30:
 
   ![Example of how periods are arranged along the timeline](./periods.png)
 
