@@ -17,7 +17,7 @@ from hetzner_snap_and_rotate.servers import Server, ServerAction
 @dataclass(kw_only=True)
 class Protection(JSONWizard):
 
-    delete: bool
+    delete: bool = field(default=False)
 
 
 @dataclass(kw_only=True, unsafe_hash=True)
