@@ -2,6 +2,7 @@ import sys
 
 from datetime import datetime, timezone
 from syslog import LOG_DEBUG, LOG_ERR
+from traceback import format_exc
 from typing import Dict, Tuple, Optional
 
 from hetzner_snap_and_rotate.config import Config
@@ -106,10 +107,10 @@ def main() -> int:
                         log(f'{i:3}. {sn.description}', LOG_DEBUG)
 
             except Exception as ex:
-                log(repr(ex), LOG_ERR)
+                log(format_exc(limit=-1), LOG_ERR)
 
     except Exception as ex:
-        log(repr(ex), LOG_ERR)
+        log(format_exc(limit=-1), LOG_ERR)
 
     return 0
 
