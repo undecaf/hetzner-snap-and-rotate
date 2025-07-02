@@ -1,4 +1,3 @@
-import os
 import time
 
 from dataclass_wizard import JSONWizard
@@ -6,12 +5,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from syslog import LOG_NOTICE, LOG_INFO, LOG_WARNING
-from typing import Type, Optional
+from typing import Type
 
 from hetzner_snap_and_rotate.api import api_request, ApiError, Page, ActionWrapper, RecoverableError
 from hetzner_snap_and_rotate.config import Config, config as global_config
 from hetzner_snap_and_rotate.logger import log
-from hetzner_snap_and_rotate.periods import Period
 
 
 class ServerStatus(Enum):
