@@ -8,7 +8,7 @@ from requests_mock import Mocker
 from unittest import TestCase
 from urllib.parse import urlencode
 
-from hetzner_snap_and_rotate.api import api_request, ApiError, RecoverableError, Page, Action, ActionStatus
+from hetzner_snap_and_rotate.api import api_request, sanitize_timestamps, ApiError, RecoverableError, Page, Action, ActionStatus
 
 api_base = 'https://api.hetzner.cloud/v1/'
 api_path = 'test'
@@ -119,6 +119,24 @@ class ApiTest(TestCase):
     def test_api_error(self, status_code: int, reason: str, mocker):
         mocker.get(api_url, status_code=status_code, reason=reason, json=self.error_json)
         self.assertRaises(ApiError, api_request, MockResponse, api_path=api_path, api_token=api_token)
+
+    @parameterized.expand([
+        ('', ''),
+        ('abc', 'abc'),
+        ('2025-07-01T12:34:56.789Z', '2025-07-01T12:34:56.789Z'),
+        ('"2025-07-01T12:34:56.789012Z"', '"2025-07-01T12:34:56.789012Z"'),
+        ('"2025-07-01T12:34:56.78901Z"', '"2025-07-01T12:34:56.789010Z"'),
+        ('"2025-07-01T12:34:56.7890Z"', '"2025-07-01T12:34:56.789000Z"'),
+        ('"2025-07-01T12:34:56.789Z"', '"2025-07-01T12:34:56.789000Z"'),
+        ('"2025-07-01T12:34:56.78Z"', '"2025-07-01T12:34:56.780000Z"'),
+        ('"2025-07-01T12:34:56.7Z"', '"2025-07-01T12:34:56.700000Z"'),
+        ('"2025-07-01T12:34:56.Z"', '"2025-07-01T12:34:56.000000Z"'),
+        ('"2025-07-01T12:34:56.789Z" "2024-07-01T12:34:56.789Z"', '"2025-07-01T12:34:56.789000Z" "2024-07-01T12:34:56.789000Z"'),
+        ('"2025-07-01T12:34:56.789+00:00"', '"2025-07-01T12:34:56.789000+00:00"'),
+        ('"2025-07-01T12:34:56.789-01:00"', '"2025-07-01T12:34:56.789000-01:00"'),
+    ])
+    def test_timestamp_sanitizing(self, text: str, expected: str):
+        self.assertEqual(expected, sanitize_timestamps(text))
 
 
 @dataclass(kw_only=True)

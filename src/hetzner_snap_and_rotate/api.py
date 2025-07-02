@@ -1,4 +1,5 @@
 import json
+import re
 import requests
 import time
 
@@ -7,6 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
+
+from typing_extensions import Match
 
 from hetzner_snap_and_rotate.config import config
 
@@ -17,6 +20,19 @@ class ApiError(Exception):
 
 class RecoverableError(Exception):
     pass
+
+
+# Matches JSON ISO 8601 timestamp strings with fewer than six
+# fractional digits and captures the fractional digits in group #1
+timestamp_pattern = re.compile('"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.(\\d{,5})(?=Z|[+-]\\d{2}:\\d{2}")')
+
+
+# Adds trailing zero(s) to a timestamp so that there are six fractional digits
+def sanitize_timestamps(json_text: str):
+    def add_zeroes(match: Match):
+        return match.group(0) + ('0' * (6 - len(match.group(1))))
+
+    return timestamp_pattern.sub(add_zeroes, json_text)
 
 
 def api_request(return_type, api_path: str, api_token: str,
@@ -49,7 +65,7 @@ def api_request(return_type, api_path: str, api_token: str,
         else:
             raise ApiError(message)
 
-    return return_type.from_json(response.text) if return_type is not None else None
+    return return_type.from_json(sanitize_timestamps(response.text)) if return_type is not None else None
 
 
 @dataclass(kw_only=True)
