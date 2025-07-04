@@ -24,7 +24,7 @@ class RecoverableError(Exception):
 
 # Matches JSON ISO 8601 timestamp strings with fewer than six
 # fractional digits and captures the fractional digits in group #1
-timestamp_pattern = re.compile('"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.(\\d{,5})(?=Z|[+-]\\d{2}:\\d{2}")')
+timestamp_pattern = re.compile('"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.(\\d{,5})(?=Z"|[+-]\\d{2}:\\d{2}")')
 
 
 # Adds trailing zero(s) to a timestamp so that there are six fractional digits
