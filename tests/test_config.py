@@ -54,7 +54,7 @@ class TestConfig(TestCase):
     def read_config(file_name: str, options=None) -> Config:
         if options is None:
             options = []
-        return Config.read_config([sys.argv[0], '-c', f'config/{file_name}.json'] + options)
+        return Config.read_config([sys.argv[0], '-c', f'tests/config/{file_name}.json'] + options)
 
     def assert_default(self, actual: Config.Defaults, expected: Config.Defaults = None):
         self.assertEqual(actual, expected)
