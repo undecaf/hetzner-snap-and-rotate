@@ -1,4 +1,4 @@
-name: Test and build and then publish as PyPI package and Docker image
+name: Test, build and publish as PyPI package and Docker image
 
 on:
   push:
@@ -80,6 +80,10 @@ jobs:
 #         Uncomment the following line if publishing to TestPyPI
 #          repository-url: https://test.pypi.org/legacy/
           verbose: true
+
+      - name: Wait until actually published
+        run: sleep 60s
+        shell: bash
 
   publish-docker:
     needs: publish-pypi
