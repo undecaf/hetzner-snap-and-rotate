@@ -82,7 +82,7 @@ jobs:
           verbose: true
 
       - name: Wait until actually published
-        run: sleep 60s
+        run: sleep 300s
         shell: bash
 
   publish-docker:
