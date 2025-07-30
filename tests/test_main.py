@@ -1,17 +1,76 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from syslog import LOG_INFO
 from typing import Optional
 
 from parameterized import parameterized
 from unittest import TestCase
+from unittest.mock import patch
 
 from setuptools.command.rotate import rotate
 
-from hetzner_snap_and_rotate.__main__ import rotate, Rotated
+from hetzner_snap_and_rotate.__main__ import rotate, Rotated, main
+from hetzner_snap_and_rotate.api import Page, ApiError
 from hetzner_snap_and_rotate.config import Config
 from hetzner_snap_and_rotate.periods import Period
-from hetzner_snap_and_rotate.servers import Server
-from hetzner_snap_and_rotate.snapshots import Snapshot, Protection
+from hetzner_snap_and_rotate.servers import Server, Servers, ServerStatus
+from hetzner_snap_and_rotate.snapshots import Snapshot, Snapshots, Protection
+
+
+class PowerFailure(Enum):
+    NONE = 0
+    POWER_ON = 1
+    POWER_OFF = 2
+    SHUT_DOWN = 3
+    API_ERROR = 4
+
+
+class CreateFailure(Enum):
+    NONE = 0
+    TIMEOUT = 1
+    API_ERROR = 2
+
+
+@dataclass(kw_only=True, unsafe_hash=True)
+class ServerMock(Server):
+
+    power_failure: PowerFailure
+
+    def power(self, turn_on: bool):
+        if self.id == 0:
+            # Only the first server can fail
+            if self.power_failure == PowerFailure.API_ERROR:
+                raise ApiError()
+
+            if turn_on and self.power_failure == PowerFailure.POWER_ON:
+                raise TimeoutError()
+
+            if not turn_on:
+                if not self.config.allow_poweroff and self.power_failure == PowerFailure.SHUT_DOWN:
+                    raise TimeoutError()
+
+                if self.config.allow_poweroff and self.power_failure == PowerFailure.POWER_OFF:
+                    raise TimeoutError()
+
+        self.status = ServerStatus.RUNNING if turn_on else ServerStatus.OFF
+
+
+def mocked_server(id: int, status: ServerStatus = ServerStatus.RUNNING,
+                  shutdown_and_restart: bool = True, allow_poweroff: bool = False,
+                  power_failure: PowerFailure = PowerFailure.NONE):
+
+    server: Server = ServerMock(id=id, name=f'test-server#{id}', status=status, power_failure=power_failure)
+
+    config: Config = Config(api_token='123456')
+    config.create_snapshot = True
+    config.rotate = False
+    config.snapshot_timeout = 1
+    config.shutdown_and_restart = shutdown_and_restart
+    config.allow_poweroff = allow_poweroff
+    server.config = config
+
+    return server
 
 
 @dataclass(kw_only=True, unsafe_hash=True)
@@ -184,3 +243,148 @@ class MainTest(TestCase):
         snapshots = sorted(rotated, key=lambda s: s.created, reverse=True)
 
         self.assertEqual(expected, snapshots, 'Snapshots not rotated as expected')
+
+
+    @parameterized.expand([
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.NONE,
+            CreateFailure.NONE,
+            0,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.SHUT_DOWN,
+            CreateFailure.NONE,
+            1,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.POWER_ON,
+            CreateFailure.NONE,
+            1,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            True,
+            PowerFailure.SHUT_DOWN,
+            CreateFailure.NONE,
+            0,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            True,
+            PowerFailure.POWER_OFF,
+            CreateFailure.NONE,
+            1,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.NONE,
+            CreateFailure.API_ERROR,
+            1,
+        ],
+        [
+            1,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.NONE,
+            CreateFailure.TIMEOUT,
+            1,
+        ],
+        [
+            2,
+            ServerStatus.RUNNING,
+            True,
+            False,
+            PowerFailure.SHUT_DOWN,
+            CreateFailure.NONE,
+            1,
+        ],
+    ])
+    @patch('hetzner_snap_and_rotate.snapshots.Snapshots.load_snapshots')
+    @patch('hetzner_snap_and_rotate.servers.Servers.load_servers')
+    @patch('hetzner_snap_and_rotate.servers.Servers.load_configured_servers')
+    @patch('hetzner_snap_and_rotate.__main__.create_snapshot')
+    @patch('hetzner_snap_and_rotate.__main__.log')
+    # Note: @patch must come below the @parameterized.expand, and the mock objects must come last in reverse order
+    def test_creating_snapshots(self,
+                                server_count: int, status: ServerStatus, shutdown_and_restart: bool, allow_poweroff: bool,
+                                power_failure: PowerFailure, create_failure: CreateFailure,
+                                expected_return_value: int,
+                                mocked_log, mocked_create_snapshot, mocked_load_configured_servers, mocked_load_servers,
+                                mocked_load_snapshots):
+
+        servers: list[Server] = [mocked_server(
+            id=i,
+            status=status,
+            shutdown_and_restart=shutdown_and_restart,
+            allow_poweroff=allow_poweroff,
+            power_failure=power_failure
+        ) for i in range(server_count)]
+
+        snapshot: SnapshotMock = mocked_snapshot(created=datetime.now(tz=timezone.utc))
+        meta: Page.Metadata = Page.Metadata(pagination=Page.Metadata.Pagination(page=1, next_page=None))
+        snapshots_created = 0
+
+        def load_snapshots():
+            return Snapshots(images=[], meta=meta)
+
+        def load_servers():
+            return Servers(servers=servers, meta=meta)
+
+        def load_configured_servers(snapshots: Snapshots):
+            return load_servers()
+
+        def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
+            nonlocal snapshots_created
+
+            if server.id == 0:
+                # Only the first server can fail
+                if create_failure == CreateFailure.TIMEOUT:
+                    raise TimeoutError()
+
+                if create_failure == CreateFailure.API_ERROR:
+                    raise ApiError()
+
+            snapshots_created += 1
+            return snapshot
+
+        def log(message: str, priority: int = LOG_INFO):
+            pass
+
+
+        mocked_load_snapshots.side_effect = load_snapshots
+        mocked_load_servers.side_effect = load_servers
+        mocked_load_configured_servers.side_effect = load_configured_servers
+        mocked_create_snapshot.side_effect = create_snapshot
+        mocked_log.side_effect = log
+
+        return_value = main()
+
+        self.assertEqual(expected_return_value, return_value,
+                         f'main() return value id {return_value}, expected: {expected_return_value}')
+        self.assertGreaterEqual(snapshots_created, server_count - 1,
+                         f'{snapshots_created} snapshot(s) were created, expected at least: {server_count-1}')
+
+        for srv in servers:
+            expected_status = status if power_failure != PowerFailure.POWER_ON else ServerStatus.OFF
+            self.assertEqual(expected_status, srv.status,
+                             f'Server {srv.id} has status {srv.status}, expected: {expected_status}')
