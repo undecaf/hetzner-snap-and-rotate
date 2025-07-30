@@ -27,6 +27,7 @@ Additional features:
 - [Running the script natively](#running-the-script-natively)
   - [Command line options](#command-line-options)
   - [Passing the API token](#passing-the-api-token)
+  - [Error handling](#error-handling)
   - [Creating and rotating snapshots in a cron job](#creating-and-rotating-snapshots-in-a-cron-job)
 - [Running the script in a container](#running-the-script-in-a-container)
   - [Passing the configuration file to the container](#passing-the-configuration-file-to-the-container)
@@ -224,12 +225,22 @@ unauthorized access. The following methods are available for passing the API tok
 - Piping it to the script through `stdin` and specifying `api-token-from -` on the command line.
 
 
+### Error handling
+
+Snapshot-taking and rotation operations are isolated from each other with regard to failure.
+If an operation fails, then this will not affect further operations on the same and on other servers.
+Global errors (such as network or authentication failure) still affect multiple or all operations. 
+
+The script terminates with return code&nbsp;0 if all operations succeeded, or with return code&nbsp;1
+if there was any failure.
+
+
 ### Creating and rotating snapshots in a cron job
 
 As a cron job, this script should run once per the shortest period for which snapshots are to be retained.  
 If, for example, the shortest retention period has been set to `daily` then the script should run daily.
 
-If the script is run more frequently then several `latest` snapshots will be preserved. 
+If the script is run more frequently then multiple `latest` snapshots will be preserved. 
 
 
 ## Running the script in a container

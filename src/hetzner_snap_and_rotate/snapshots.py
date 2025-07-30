@@ -115,7 +115,7 @@ class SnapshotWrapper(ActionWrapper, JSONWizard):
     image: Snapshot
 
 
-# Ugly hack -- this should be a method of class servers.Sever
+# Ugly hack -- this should be a method of class servers.Server
 # but this would lead to a circular depencency
 def create_snapshot(server: Server, timeout: int = 300) -> Snapshot:
     description = Snapshot.snapshot_name(server=server)

@@ -47,13 +47,15 @@ def rotate(config: Config.Defaults, not_rotated: list[Snapshot], p_end: datetime
 
 
 def main() -> int:
+    return_value = 0
+
     try:
         snapshots = Snapshots.load_snapshots()
         servers = Servers.load_configured_servers(snapshots)
 
         for srv in servers.servers:
+            # Create a new snapshot if so configured and preserve the server operating status
             try:
-                # Create a new snapshot if so configured and preserve the server operating status
                 new_snapshot = None
 
                 if srv.config.create_snapshot:
@@ -79,7 +81,12 @@ def main() -> int:
                     if caught:
                         raise caught
 
-                # Rotate existing snapshots of this server if so configured
+            except Exception:
+                log(format_exc(limit=-1), LOG_ERR)
+                return_value = 1
+
+            # Rotate existing snapshots of this server if so configured
+            try:
                 if srv.config.rotate:
                     sn_len = len(srv.snapshots)
                     log(f'Server [{srv.name}]: {sn_len} snapshot{"s"[:sn_len!=1]} before rotation', LOG_DEBUG)
@@ -93,7 +100,7 @@ def main() -> int:
                     p_end = new_snapshot.created if new_snapshot is not None else datetime.now(tz=timezone.utc)
                     rotated = rotate(config=srv.config, not_rotated=not_rotated, p_end=p_end)
 
-                   # Rename the snapshots which are now associated with a different rotation period
+                    # Rename the snapshots which are now associated with a different rotation period
                     for sn, (p, p_num) in rotated.items():
                         sn.rename(created_from=srv, period=p, period_number=p_num)
 
@@ -106,13 +113,15 @@ def main() -> int:
                     for i, sn in enumerate(srv.snapshots, start=1):
                         log(f'{i:3}. {sn.description}', LOG_DEBUG)
 
-            except Exception as ex:
+            except Exception:
                 log(format_exc(limit=-1), LOG_ERR)
+                return_value = 1
 
     except Exception as ex:
         log(format_exc(limit=-1), LOG_ERR)
+        return_value = 1
 
-    return 0
+    return return_value
 
 
 if __name__ == '__main__':
