@@ -1,8 +1,10 @@
-FROM python:3.10-alpine as base
+FROM python:3.10-alpine AS base
 
 ARG VERSION
 
-RUN apk --no-cache add tzdata && pip install --no-cache-dir --no-warn-script-location hetzner-snap-and-rotate==$VERSION
+RUN apk --no-cache add tzdata \
+    && pip install --no-cache-dir --no-warn-script-location --upgrade pip \
+    && pip install --no-cache-dir --no-warn-script-location hetzner-snap-and-rotate==$VERSION
 
 # Produce a squashed image
 FROM scratch
