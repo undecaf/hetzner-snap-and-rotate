@@ -103,11 +103,17 @@ class Server(JSONWizard):
                     self.perform_action(ServerAction.SHUTDOWN, timeout = self.config.shutdown_timeout)
                     log(f'Server [{self.name}]: has been shut down', LOG_INFO)
 
-            except TimeoutError:
-                log(f'Server [{self.name}]: unable to shut down, powering off', LOG_WARNING)
-                if not global_config.dry_run:
-                    self.perform_action(ServerAction.POWER_OFF, timeout = self.config.shutdown_timeout)
-                    log(f'Server [{self.name}]: has been powered off', LOG_INFO)
+            except TimeoutError as timeout_error:
+                if self.config.allow_poweroff:
+                    # Unable to shut down in time, try powering off
+                    log(f'Server [{self.name}]: unable to shut down, powering off', LOG_WARNING)
+                    if not global_config.dry_run:
+                        self.perform_action(ServerAction.POWER_OFF, timeout = self.config.shutdown_timeout)
+                        log(f'Server [{self.name}]: has been powered off', LOG_INFO)
+
+                else:
+                    # Unable to shut down in time and not allowed to power off
+                    raise timeout_error
 
 
 @dataclass(kw_only=True)
